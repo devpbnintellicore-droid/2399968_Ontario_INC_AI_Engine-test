@@ -1,0 +1,94 @@
+# -----------------------------
+# Node Modules
+# -----------------------------
+node_modules/
+Commites.md
+
+# -----------------------------
+# Environment Variables
+# -----------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -----------------------------
+# Prisma Generated
+# -----------------------------
+/generated/prisma
+
+# -----------------------------
+# Logs
+# -----------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------------------
+# Build / Temp
+# -----------------------------
+dist/
+build/
+.cache/
+.tmp/
+.temp/
+
+# -----------------------------
+# OS Files
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# IDE / Editor
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.superpowers/
+# -----------------------------
+# One-off / Scratch Scripts
+# -----------------------------
+deleteExperiment.js
+fix-seq.js
+fix-seq-all.js
+get-questions.js
+create_shadow.sql
+migration.sql
+schema.bak
+
+# -----------------------------
+# Testing
+# -----------------------------
+coverage/
+
+# -----------------------------
+# Security
+# -----------------------------
+*.pem
+*.key
+
+
+scripts.zip
+run_on_live_server.sql
+
+# -----------------------------
+# Local Utility Scripts
+# -----------------------------
+scripts/backfill_questionnaires.js
+scripts/create_shadow_db.js
+scripts/create-restaurant-review-sheet.js
+scripts/create-full-menu-review-sheet.js
+scripts/gen_mig.js
+scripts/reset_mig.js
+scripts/update_schema.js
+
+google-sheet-data
+docs
+scripts
+2399968.zip

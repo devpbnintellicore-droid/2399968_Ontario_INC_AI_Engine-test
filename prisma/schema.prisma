@@ -1,0 +1,389 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id                                                       Int                 @id @default(autoincrement())
+  name                                                     String
+  email                                                    String              @unique
+  password                                                 String
+  role                                                     StaffRole
+  status                                                   StaffStatus         @default(ACTIVE)
+  createdAt                                                DateTime            @default(now())
+  deletedAt                                                DateTime?
+  deactivatedAt                                            DateTime?
+  deactivatedBy                                            Int?
+  deactivationReason                                       String?
+  auditLogs                                                AuditLog[]
+  approvedExperiments                                      CookingExperiment[] @relation("CookingExperiment_approvedByIdToStaff")
+  experiments                                              CookingExperiment[] @relation("ChefRelation")
+  rejectedExperiments                                      CookingExperiment[] @relation("CookingExperiment_rejectedByIdToStaff")
+  reviewedExperiments                                      CookingExperiment[] @relation("CookingExperiment_reviewedByIdToStaff")
+  submittedExperiments                                     CookingExperiment[] @relation("CookingExperiment_submittedByIdToStaff")
+  reviewAnswers                                            ReviewAnswer[]
+  ReviewerAssignment                                       ReviewerAssignment?
+  RoleHistory                                              RoleHistory[]
+  sensoryEvaluations                                       SensoryEvaluation[]
+}
+
+model Recipe {
+  id            Int                 @id @default(autoincrement())
+  name          String              @unique
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  publicId      String?             @unique
+  experiments   CookingExperiment[]
+  RecipeVersion RecipeVersion[]
+}
+
+model IngredientCatalog {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  unit      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CookingExperiment {
+  id                                           Int                 @id @default(autoincrement())
+  recipeName                                   String
+  recipeVersion                                String
+  experimentDate                               DateTime?
+  experimentTime                               String?
+  temperature                                  Float?
+  duration                                     Int?
+  expectedTexture                              String?
+  achievedTexture                              String?
+  expectedOutput                               Float?
+  actualOutput                                 Float?
+  remarks                                      String?
+  status                                       ExperimentStatus    @default(DRAFT)
+  createdAt                                    DateTime            @default(now())
+  updatedAt                                    DateTime            @updatedAt
+  chefId                                       Int?
+  recipeId                                     Int?
+  publicId                                     String?             @unique
+  approvedAt                                   DateTime?
+  approvedById                                 Int?
+  batchPublicId                                String?             @unique
+  completedAt                                  DateTime?
+  rejectedAt                                   DateTime?
+  rejectedById                                 Int?
+  reviewedAt                                   DateTime?
+  reviewedById                                 Int?
+  submittedAt                                  DateTime?
+  submittedById                                Int?
+  actualAppearance                             String?
+  actualAroma                                  String?
+  actualFlavor                                 String?
+  aiAnalysisId                                 String?
+  aiConfidenceScore                            Float?
+  aiDataSource                                 String?
+  aiGeneratedAt                                DateTime?
+  aiGeneratedBy                                String?
+  aiModelVersion                               String?
+  aiReason                                     String?
+  aiResult                                     String?
+  aiStatus                                     AiStatus?
+  aiKeyTakeaways                               Json?
+  aiImprovementAreas                           Json?
+  aiRecommendationStatus                       String?
+  approvalDecision                             String?
+  approvalReason                               String?
+  expectedAppearance                           String?
+  expectedAroma                                String?
+  expectedFlavor                               String?
+  reviewComments                               String?
+  textureAcceptanceThreshold                   Float?              @default(0)
+  textureAcceptanceResult                      String?
+  approvedBy                                   Staff?              @relation("CookingExperiment_approvedByIdToStaff", fields: [approvedById], references: [id])
+  chef                                         Staff?              @relation("ChefRelation", fields: [chefId], references: [id])
+  recipe                                       Recipe?             @relation(fields: [recipeId], references: [id])
+  rejectedBy                                   Staff?              @relation("CookingExperiment_rejectedByIdToStaff", fields: [rejectedById], references: [id])
+  reviewedBy                                   Staff?              @relation("CookingExperiment_reviewedByIdToStaff", fields: [reviewedById], references: [id])
+  submittedBy                                  Staff?              @relation("CookingExperiment_submittedByIdToStaff", fields: [submittedById], references: [id])
+  images                                       ExperimentImage[]
+  ingredients                                  Ingredient[]
+  RecipeVersion                                RecipeVersion?
+  reviewAnswers                                ReviewAnswer[]
+  ReviewConclusion                             ReviewConclusion?
+  ChefNoteHistory                              ChefNoteHistory[]
+  sensoryEvaluations                           SensoryEvaluation[]
+  aiAnalysisRecord                             AIAnalysis?
+}
+
+model Ingredient {
+  id           Int               @id @default(autoincrement())
+  name         String
+  quantity     Float
+  unit         String
+  experimentId Int
+  experiment   CookingExperiment @relation(fields: [experimentId], references: [id])
+}
+
+model ExperimentImage {
+  id           Int               @id @default(autoincrement())
+  imageUrl     String
+  experimentId Int
+  experiment   CookingExperiment @relation(fields: [experimentId], references: [id])
+}
+
+model ReviewQuestion {
+  id        Int               @id @default(autoincrement())
+  question  String
+  createdAt DateTime          @default(now())
+  type      String
+  config    Json?
+  deletedAt DateTime?
+  answers   ReviewAnswer[]
+  versions  QuestionVersion[]
+}
+
+model ReviewAnswer {
+  id                Int               @id @default(autoincrement())
+  questionId        Int
+  experimentId      Int
+  answerValue       Json
+  createdAt         DateTime          @default(now())
+  reviewerId        Int?
+  questionStatus    String            @default("Answered")
+  experiment        CookingExperiment @relation(fields: [experimentId], references: [id])
+  question          ReviewQuestion    @relation(fields: [questionId], references: [id])
+  questionVersionId Int?
+  questionVersion   QuestionVersion?  @relation(fields: [questionVersionId], references: [id])
+  reviewer          Staff?            @relation(fields: [reviewerId], references: [id])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String
+  entity      String
+  entityId    Int?
+  entityLabel String?
+  description String
+  userId      Int?
+  createdAt   DateTime @default(now())
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  user        Staff?   @relation(fields: [userId], references: [id])
+}
+
+model SensoryEvaluation {
+  id                  Int               @id @default(autoincrement())
+  cookingExperimentId Int
+  tasteConsistency    Float
+  aromaticVolatility  Float
+  sodiumProjection    Float
+  chromaticAppeal     Float
+  structuralIntegrity Float
+  scovillePerception  Float
+  lipidSaturation     Float
+  cellularFreshness   Float
+  palatePersistence   Float
+  finalExpertNote     String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  reviewerId          Int?
+  experiment          CookingExperiment @relation(fields: [cookingExperimentId], references: [id])
+  reviewer            Staff?            @relation(fields: [reviewerId], references: [id])
+}
+
+model RecipeReportCache {
+  id            Int      @id @default(autoincrement())
+  recipeName    String
+  dataSignature String
+  reportUrl     String
+  publicId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([recipeName, dataSignature])
+}
+
+model RecipeVersion {
+  id                Int               @id @default(autoincrement())
+  recipeId          Int?
+  experimentId      Int               @unique
+  version           String
+  changeSummary     String
+  oldValue          Json?
+  newValue          Json
+  modifiedBy        Int?
+  modifiedAt        DateTime          @default(now())
+  CookingExperiment CookingExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  Recipe            Recipe?           @relation(fields: [recipeId], references: [id])
+
+  @@index([recipeId, modifiedAt])
+}
+
+model ChefNoteHistory {
+  id                Int               @id @default(autoincrement())
+  experimentId      Int
+  oldValue          String?
+  newValue          String?
+  reason            String?
+  modifiedBy        Int?
+  modifiedAt        DateTime          @default(now())
+  CookingExperiment CookingExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, modifiedAt])
+}
+
+model ReviewConclusion {
+  id                Int               @id @default(autoincrement())
+  experimentId      Int               @unique
+  source            String            @default("Human Reviewer")
+  writtenBy         String?
+  writtenAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  CookingExperiment CookingExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+}
+
+model ReviewerAssignment {
+  id         Int      @id @default(autoincrement())
+  reviewerId Int      @unique
+  assignedBy Int?
+  assignedAt DateTime @default(now())
+  Staff      Staff    @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+}
+
+model RoleHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  oldRole   String?
+  newRole   String?
+  changedBy Int?
+  changedAt DateTime @default(now())
+  Staff     Staff    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum StaffRole {
+  MANAGER
+  CHEF
+  REVIEWER
+  CRA
+}
+
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ExperimentStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum AiStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  NOT_AVAILABLE
+  PENDING_ANALYSIS
+  ANALYSIS_RUNNING
+  ANALYSIS_COMPLETED
+  ANALYSIS_FAILED
+}
+
+model Questionnaire {
+  id        Int                    @id @default(autoincrement())
+  name      String
+  versions  QuestionnaireVersion[]
+  createdAt DateTime               @default(now())
+}
+
+model QuestionnaireVersion {
+  id              Int               @id @default(autoincrement())
+  versionNumber   Int
+  questionnaireId Int
+  questionnaire   Questionnaire     @relation(fields: [questionnaireId], references: [id])
+  status          String            @default("Draft")
+  questions       QuestionVersion[] @relation("QuestionnaireToQuestionVersion")
+  createdBy       Int?
+  archivedBy      Int?
+  createdAt       DateTime          @default(now())
+  archivedAt      DateTime?
+}
+
+model QuestionVersion {
+  id           Int            @id @default(autoincrement())
+  questionId   Int
+  question     ReviewQuestion @relation(fields: [questionId], references: [id])
+  version      Int
+  questionText String
+  type         String
+  config       Json?
+  changedBy    Int?
+  changedAt    DateTime       @default(now())
+
+  questionnaires QuestionnaireVersion[] @relation("QuestionnaireToQuestionVersion")
+  answers        ReviewAnswer[]
+  changeLogs     QuestionChangeLog[]
+}
+
+model QuestionChangeLog {
+  id                Int             @id @default(autoincrement())
+  questionVersionId Int
+  questionVersion   QuestionVersion @relation(fields: [questionVersionId], references: [id])
+  previousValue     Json?
+  newValue          Json?
+  changedBy         Int?
+  changedAt         DateTime        @default(now())
+}
+
+model AIAnalysis {
+  id               Int               @id @default(autoincrement())
+  experimentId     Int               @unique
+  experiment       CookingExperiment @relation(fields: [experimentId], references: [id])
+  status           String
+  failureReason    String?
+  failureTime      DateTime?
+  retryCount       Int               @default(0)
+  lastRetry        DateTime?
+  modelVersion     String?
+  generatedBy      String?
+  generatedAt      DateTime?
+  dataSource       String?
+  fallbackMethod   String?
+  fallbackReviewer String?
+  fallbackDate     DateTime?
+  keyTakeaways     Json?
+  improvementAreas Json?
+  recommendationStatus String?
+  confidenceScore  Float?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  retries  AIAnalysisRetry[]
+  failures AIAnalysisFailure[]
+}
+
+model AIAnalysisRetry {
+  id           Int        @id @default(autoincrement())
+  aiAnalysisId Int
+  aiAnalysis   AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+  retryNumber  Int
+  status       String
+  retryResult  String?
+  retryTime    DateTime   @default(now())
+}
+
+model AIAnalysisFailure {
+  id           Int        @id @default(autoincrement())
+  aiAnalysisId Int
+  aiAnalysis   AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+  reason       String
+  failureTime  DateTime   @default(now())
+}
